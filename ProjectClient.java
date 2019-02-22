@@ -24,8 +24,27 @@ public class ProjectClient {
     private static Statement statement = null;
     
     private static ResultSet resultSet = null;
+    
+    private static final boolean DEBUG = true;
+    
+    private static PreparedStatement checkCustomerLogin = null;
+    private static PreparedStatement checkEmployeeLogin = null;
+    private static PreparedStatement checkAdminLogin = null;
+    private static PreparedStatement addCustomer = null;
+    private static PreparedStatement addEmployee = null;
+    private static PreparedStatement checkBookings = null;
+    private static PreparedStatement cancelBooking = null;
+    private static PreparedStatement bookRoom = null;
+    private static PreparedStatement payCharges = null;
+    private static PreparedStatement checkIn = null;
+    private static PreparedStatement checkOut = null;
+    private static PreparedStatement addCharge = null;
+    private static PreparedStatement checkBooking = null;
+    //private static PreparedStatement checkBooking = null;
 
     public static void main(String[] args) throws Exception {
+        
+        initializePreparedStatements();
 
         int customerID = 0;
 
@@ -286,17 +305,22 @@ public class ProjectClient {
 
     }
     
-    public static void employeeLogin() {
+    public static void employeeLogin() throws SQLException{
+        
+        if(DEBUG) {
+            System.out.println("Entered employee login function");
+        }
 
         boolean exit = false;
         try {
             while (!exit) {
 
                 System.out.print("Enter your ID: ");
-                String employeeID = console.next();
-                statement = connect.createStatement();
-                resultSet = statement.executeQuery("SELECT * FROM Employees "
-                        + "WHERE EmployeeID = " + employeeID);
+                int employeeID = console.nextInt();
+                checkEmployeeLogin.setInt(1, employeeID);
+                //statement = connect.createStatement();
+                //resultSet = statement.executeQuery("SELECT * FROM Employees "
+                        //+ "WHERE EmployeeID = " + employeeID);
                 
                 if (resultSet.next() == false) {
                     System.out.println("EmployeeID not found!");
@@ -306,13 +330,17 @@ public class ProjectClient {
                 }
             }
         }
-        catch (Exception e) {
+        catch (InputMismatchException e) {
             System.out.println(e.getMessage());
         }
 
     }
     
     public static void employeeMenu() throws SQLException {
+        
+        if (DEBUG) {
+            System.out.println("\nEntered Employee Menu Display");
+        }
         
         boolean exit = false;
         
@@ -364,6 +392,10 @@ public class ProjectClient {
         }
 
     }
+    
+    public static void checkCustomerLogin() throws SQLException {
+        
+    }
 
     public static void checkCustomerBookings() throws SQLException {
 
@@ -384,11 +416,15 @@ public class ProjectClient {
             }
 
         }
+        if (DEBUG) {
+            System.out.println("\nCalling checkCustomerBookings(" + customerID
+            + ")");
+        }
         checkCustomerBookings(customerID);
     }
 
     public static void checkCustomerBookings(int customerID) throws SQLException {
-
+        
         resultSet = statement.executeQuery("SELECT * FROM Records "
                 + "WHERE CustomerID = " + customerID);
 
@@ -477,9 +513,9 @@ public class ProjectClient {
         int userSelection = 0;
         
         while(!exit) {
-            
+            System.out.println("\nEnter the CustomerID: ");
             try {
-                
+                customerID = console.nextInt();
             }
             catch (InputMismatchException e) {
                 System.out.print(e.getMessage());
@@ -505,9 +541,9 @@ public class ProjectClient {
         int userSelection = 0;
         
         while(!exit) {
-            
+            System.out.println("\nEnter CustomerID: ");
             try {
-                
+                customerID = console.nextInt();
             }
             catch (InputMismatchException e) {
                 System.out.print(e.getMessage());
@@ -531,8 +567,9 @@ public class ProjectClient {
         int userSelection = 0;
         
         while(!exit) {
-            
+            System.out.println("\nEnter CustomerID: ");
             try {
+                customerID = console.nextInt();
                 
             }
             catch (InputMismatchException e) {
@@ -594,6 +631,44 @@ public class ProjectClient {
     
     private static void addCharge(int customerID) {
         System.out.println("We can't add charges yet. Everything is free.");
+    }
+
+    private static void initializePreparedStatements() throws SQLException {
+        
+        //Create the checkCustomerLogin statement
+        String query = "SELECT * from Customers Where CustomerID = "
+                + "(CustomerID) values(?)";
+        checkCustomerLogin = connect.prepareStatement(query);
+        query = "SELECT * from Employees Where EmployeeID = "
+                + "(EmployeeID) values(?)";
+        checkEmployeeLogin = connect.prepareStatement(query);
+        query = "";
+        checkAdminLogin = connect.prepareStatement(query);
+        //Set up the add customer statement
+        query = " insert into Customers (CustomerID, "
+                + "fName, lName, Address, PhoneNum,"
+                + "ZipCode, City, State)"
+                + " values (?, ?, ?, ?, ?, ?, ?, ?)";
+        addCustomer = connect.prepareStatement(query);
+        query = "";
+        addEmployee = connect.prepareStatement(query);
+        query = "";
+        checkBookings = connect.prepareStatement(query);
+        query = "";
+        cancelBooking = connect.prepareStatement(query);
+        query = "";
+        bookRoom = connect.prepareStatement(query);
+        query = "";
+        payCharges = connect.prepareStatement(query);
+        query = "";
+        checkIn = connect.prepareStatement(query);
+        query = "";
+        checkOut = connect.prepareStatement(query);
+        query = "";
+        addCharge = connect.prepareStatement(query);
+        query = "";
+        checkBooking = connect.prepareStatement(query);
+
     }
 
 }//end class
