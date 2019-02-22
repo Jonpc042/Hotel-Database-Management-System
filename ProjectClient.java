@@ -8,52 +8,37 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  *
  * @author vf0975bh
  */
 public class ProjectClient {
-    
-    private static Scanner console = new Scanner(System.in);
-    
-    private static Connection connect = null;
-    
-    private static Statement statement = null;
-    
-    private static ResultSet resultSet = null;
-    
-    private static final boolean DEBUG = true;
-    
-    private static PreparedStatement checkCustomerLogin = null;
-    private static PreparedStatement checkEmployeeLogin = null;
-    private static PreparedStatement checkAdminLogin = null;
-    private static PreparedStatement addCustomer = null;
-    private static PreparedStatement addEmployee = null;
-    private static PreparedStatement checkBookings = null;
-    private static PreparedStatement cancelBooking = null;
-    private static PreparedStatement bookRoom = null;
-    private static PreparedStatement payCharges = null;
-    private static PreparedStatement checkIn = null;
-    private static PreparedStatement checkOut = null;
-    private static PreparedStatement addCharge = null;
-    private static PreparedStatement checkBooking = null;
-    //private static PreparedStatement checkBooking = null;
 
     public static void main(String[] args) throws Exception {
-        
-        initializePreparedStatements();
 
+        Connection connect = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
         int customerID = 0;
+        int customerAnswer = 0;
+        String query = "";
+        int roomNum = 0;
+        PreparedStatement preparedStmt = null;
 
         Class.forName("com.mysql.jdbc.Driver");
 
-        connect = DriverManager.getConnection("jdbc:mysql://mrbartucz.com/vf0975bh_MidtermProject?user=fw1006zs&password=fw1006zs");
+        connect = DriverManager.getConnection("jdbc:mysql://mrbartucz.com/vf0975bh_MidtermProject?user=vf0975bh&password=vf0975bh");
 
         boolean flag = true;
         String userCommand;
+        Scanner console = new Scanner(System.in);
 
         while (flag) {
             showMenu();
@@ -67,59 +52,70 @@ public class ProjectClient {
                     while (inputCheck) {
                         try {
 
-                            System.out.print("\nEnter 1 for new customer, "
-                                    + "Enter 2 for returning customer: ");
+                            System.out.print("\n\nEnter 1 for new customer, "
+                                    + "\nEnter 2 for returning customer,"
+                                    + "\nEnter 0 to exit: ");
                             //console.nextLine is to fix skipping problem
                             console.nextLine();
-                            int customerAnswer = console.nextInt();
+                            customerAnswer = console.nextInt();
 
                             if (customerAnswer == 1) {
-                                System.out.print("Enter new ID: ");
-                                customerID = console.nextInt();
-                                System.out.print("Enter First Name: ");
-                                String customerFName = console.next();
-                                System.out.print("Enter Last Name: ");
-                                String customerLName = console.next();
-                                console.nextLine();
-                                System.out.print("Enter Address: ");
-                                String customerAddress = console.nextLine();
-                                System.out.print("Enter Phone Number(1112223333 format): ");
-                                long customerPhoneNum = console.nextLong();
-                                System.out.print("Enter Zip Code: ");
-                                int customerZip = console.nextInt();
-                                System.out.print("Enter City: ");
-                                String customerCity = console.next();
-                                System.out.print("Enter State(XX format): ");
-                                String customerState = console.next();
+                                try {
+                                    System.out.print("\nEnter new ID: ");
+                                    customerID = console.nextInt();
+                                    System.out.print("Enter First Name: ");
+                                    String customerFName = console.next();
+                                    System.out.print("Enter Last Name: ");
+                                    String customerLName = console.next();
+                                    console.nextLine();
+                                    System.out.print("Enter Address: ");
+                                    String customerAddress = console.nextLine();
+                                    System.out.print("Enter Phone Number(1112223333 format): ");
+                                    long customerPhoneNum = console.nextLong();
+                                    System.out.print("Enter Zip Code: ");
+                                    int customerZip = console.nextInt();
+                                    System.out.print("Enter City: ");
+                                    String customerCity = console.next();
+                                    System.out.print("Enter State(XX format): ");
+                                    String customerState = console.next();
 
-                                String query = " insert into Customers (CustomerID, "
-                                        + "fName, lName, Address, PhoneNum,"
-                                        + "ZipCode, City, State)"
-                                        + " values (?, ?, ?, ?, ?, ?, ?, ?)";
+                                    query = " insert into Customers (CustomerID, "
+                                            + "fName, lName, Address, PhoneNum,"
+                                            + "ZipCode, City, State)"
+                                            + " values (?, ?, ?, ?, ?, ?, ?, ?)";
 
-                                PreparedStatement preparedStmt = connect.prepareStatement(query);
-                                preparedStmt.setInt(1, customerID);
-                                preparedStmt.setString(2, customerFName);
-                                preparedStmt.setString(3, customerLName);
-                                preparedStmt.setString(4, customerAddress);
-                                preparedStmt.setLong(5, customerPhoneNum);
-                                preparedStmt.setInt(6, customerZip);
-                                preparedStmt.setString(7, customerCity);
-                                preparedStmt.setString(8, customerState);
-                                //preparedStmt.
+                                    preparedStmt = connect.prepareStatement(query);
+                                    preparedStmt.setInt(1, customerID);
+                                    preparedStmt.setString(2, customerFName);
+                                    preparedStmt.setString(3, customerLName);
+                                    preparedStmt.setString(4, customerAddress);
+                                    preparedStmt.setLong(5, customerPhoneNum);
+                                    preparedStmt.setInt(6, customerZip);
+                                    preparedStmt.setString(7, customerCity);
+                                    preparedStmt.setString(8, customerState);
 
-                                // execute the preparedstatement
-                                preparedStmt.execute();
-                                inputCheck = false;
+                                    // execute the preparedstatement
+                                    preparedStmt.execute();
+                                    inputCheck = false;
+                                } catch (SQLException e) {
+                                    if (e instanceof SQLIntegrityConstraintViolationException) {
+                                        System.out.print("\nThat ID is already taken!\n");
+                                        inputCheck = true;
+                                    }
+
+                                }
+
                             } else if (customerAnswer == 2) {
                                 System.out.print("Enter your ID: ");
                                 customerID = console.nextInt();
-                                statement = connect.createStatement();
-                                resultSet = statement.executeQuery("SELECT * FROM Customers "
-                                        + "WHERE CustomerID = " + customerID);
+                                query = "SELECT * FROM Customers "
+                                        + "WHERE CustomerID = ? ";
+                                preparedStmt = connect.prepareStatement(query);
+                                preparedStmt.setInt(1, customerID);
+                                resultSet = preparedStmt.executeQuery();
 
                                 if (resultSet.next() == false) {
-                                    System.out.println("CustomerID not found!");
+                                    System.out.println("\nCustomer ID not found!");
 
                                 } else {
                                     inputCheck = false;
@@ -136,7 +132,9 @@ public class ProjectClient {
 
                         }
                     }//end inputCheck while
-
+                    if (customerAnswer == 0) {
+                        break;
+                    }
                     boolean customerFlag = true;
                     String customerCommand;
                     Scanner customerConsole = new Scanner(System.in);
@@ -150,10 +148,15 @@ public class ProjectClient {
 
                             case "1"://view profile
 
-                                statement = connect.createStatement();
+                                query = " SELECT * FROM Customers \n"
+                                        + " WHERE CustomerID = ?";
 
-                                resultSet = statement.executeQuery("SELECT * FROM Customers "
-                                        + "WHERE CustomerID = " + customerID);
+                                preparedStmt = connect.prepareStatement(query);
+
+                                preparedStmt.setInt(1, customerID);
+
+                                // execute the preparedstatement
+                                resultSet = preparedStmt.executeQuery();
 
                                 while (resultSet.next()) {
                                     customerID = resultSet.getInt("CustomerID");
@@ -166,44 +169,55 @@ public class ProjectClient {
                                     String state = resultSet.getString("State");
 
                                     System.out.println("\nCustomerID: " + customerID);
-                                    System.out.println("Name: " + firstName);
-                                    System.out.println("Number: " + lastName);
+                                    System.out.println("Name: " + firstName + " "
+                                            + "" + lastName);
+
                                     System.out.println("Address: " + address);
                                     System.out.println("PhoneNum: " + phoneNum);
                                     System.out.println("Zip Code: " + zipCode);
                                     System.out.println("City: " + city);
                                     System.out.println("State: " + state);
                                 }
+
                                 break;
                             case "2"://view booked
 
-                                resultSet = statement.executeQuery("SELECT * FROM Records "
-                                        + "WHERE CustomerID = " + customerID);
+                                query = "SELECT * FROM Records WHERE CustomerID = ?";
+                                preparedStmt = connect.prepareStatement(query);
+                                preparedStmt.setInt(1, customerID);
 
-                                if (resultSet.next() == false) {
-                                    System.out.print("No Records Found!");
-                                    break;
-                                }
+                                // execute the preparedstatement
+                                resultSet = preparedStmt.executeQuery();
 
                                 while (resultSet.next()) {
-                                    int roomNum = resultSet.getInt("RoomNum");
+
+                                    roomNum = resultSet.getInt("RoomNum");
                                     String type = resultSet.getString("Type");
                                     String checkIn = resultSet.getString("CheckInDate");
                                     String checkOut = resultSet.getString("CheckOutDate");
                                     customerID = resultSet.getInt("CustomerID");
                                     double charge = resultSet.getDouble("Charge");
-                                    System.out.print("\nCustomer ID: " + customerID);
+                                    String paid = resultSet.getString("Paid");
+                                    String paidAns = "";
+                                    if (paid.equalsIgnoreCase("TRUE")) {
+                                        paidAns = "Yes!";
+
+                                    } else {
+                                        paidAns = "No!";
+                                    }
+                                    System.out.print("\n\nCustomer ID: " + customerID);
                                     System.out.print("\nRoom Number: " + roomNum);
                                     System.out.print("\nRoom Type: " + type);
                                     System.out.print("\nCheck-in Date: " + checkIn);
                                     System.out.print("\nCheck-out Date: " + checkOut);
                                     System.out.print("\nCharge: " + charge);
+                                    System.out.print("\nPaid in full?: " + paidAns);
 
                                 }
 
                                 break;
                             case "3"://book room
-                                
+
                                 System.out.print("\nWhich type of room"
                                         + " would you like?\n"
                                         + "\nEnter 1 for 1 bed"
@@ -211,41 +225,208 @@ public class ProjectClient {
                                         + "\nEnter 3 for 3 bed\n"
                                         + "Enter 4 for a suite: ");
                                 int userSelection = console.nextInt();
-                                String type = null;
-                                if(userSelection == 1){
-                                    type = "\"1Bed\""; 
-                                }else if(userSelection == 2){
+                                String type = "";
+                                if (userSelection == 1) {
+                                    type = "\"1Bed\"";
+                                } else if (userSelection == 2) {
                                     type = "\"2Bed\"";
-                                }else if (userSelection == 3){
+                                } else if (userSelection == 3) {
                                     type = "\"3Bed\"";
-                                }else if(userSelection == 4){
+                                } else if (userSelection == 4) {
                                     type = "\"Suite\"";
                                 }
-                                
-                                
-                                String roomAvailabiltiy = "TRUE";
-                               statement = connect.createStatement();
-                                resultSet = statement.executeQuery("SELECT * FROM Rooms WHERE "
-                                        + "availability = \"TRUE\" AND type = " + type);
+
+                                query = "SELECT * FROM Rooms "
+                                        + "WHERE Availability = \"TRUE\" AND Type = " + type;
+
+                                preparedStmt = connect.prepareStatement(query);
+                                // execute the preparedstatement
+                                resultSet = preparedStmt.executeQuery();
+
                                 while (resultSet.next()) {
-                                    int roomNum = resultSet.getInt("RoomNum");
+                                    roomNum = resultSet.getInt("RoomNum");
                                     String roomType = resultSet.getString("Type");
-                                  
-                                   
+
                                     System.out.println("\nRoom: " + roomNum + " "
                                             + ":Type " + roomType);
-                                    
-                                   
-                                  
+
                                 }
+
+                                System.out.print("Enter the room number "
+                                        + "you want to book: ");
+                                int roomSelection = console.nextInt();
+
+                                query = "SELECT * FROM Rooms "
+                                        + "WHERE RoomNum = " + roomSelection;
+                                preparedStmt = connect.prepareStatement(query);
+
+                                // execute the preparedstatement
+                                resultSet = preparedStmt.executeQuery();
+                                //declare availabilty so I can reference it
+                                //outside the loop and halt the case if the
+                                //room selection is already booked
+                                String availability = "";
+
+                                boolean emptySet = true;
+                                while (resultSet.next()) {
+                                    emptySet = false;
+                                    roomNum = resultSet.getInt("RoomNum");
+                                    type = resultSet.getString("Type");
+                                    availability = resultSet.getString("Availability");
+
+                                }
+                                if (emptySet) {
+                                    System.out.print("\n\nRoom does not exist!\n");
+                                    break;
+
+                                }
+                                if (availability.equalsIgnoreCase("FALSE")) {
+                                    System.out.print("\nRoom already booked!");
+                                    break;
+                                }
+
+                                System.out.print("Enter check in date(XX/XX/XXXX format)");
+                                String checkIn = console.next();
+
+                                System.out.print("Enter check out date(XX/XX/XXXX format)");
+                                String checkOut = console.next();
+                                //remove the quotes from the type that were there
+                                //for search purposes
+                                type = type.replace("\"", "");
+                                query = " insert into Records (RoomNum, "
+                                        + "Type, CheckInDate, CheckOutDate, CustomerID,"
+                                        + "Charge, Paid)"
+                                        + " values (?, ?, ?, ?, ?, ?, ?)";
+
+                                preparedStmt = connect.prepareStatement(query);
+                                preparedStmt.setInt(1, roomSelection);
+                                preparedStmt.setString(2, type);
+                                preparedStmt.setString(3, checkIn);
+                                preparedStmt.setString(4, checkOut);
+                                preparedStmt.setInt(5, customerID);
+                                preparedStmt.setDouble(6, 0.00);
+                                preparedStmt.setString(7, "FALSE");
+
+                                // execute the preparedstatement
+                                preparedStmt.execute();
+
+                                query = "update Rooms set Availability = ? "
+                                        + "where RoomNum = " + roomSelection;
+                                preparedStmt = connect.prepareStatement(query);
+                                preparedStmt.setString(1, "FALSE");
+                                preparedStmt.executeUpdate();
+
                                 break;
-                            case "4":// cancel bookingd
+                            case "4":// cancel booking
+
+                                query = "SELECT * FROM Records WHERE CustomerID = ? "
+                                        + "AND Paid = \"FALSE\"";
+                                preparedStmt = connect.prepareStatement(query);
+                                preparedStmt.setInt(1, customerID);
+
+                                resultSet = preparedStmt.executeQuery();
+                                emptySet = true;
+
+                                while (resultSet.next()) {
+
+                                    emptySet = false;
+                                    roomNum = resultSet.getInt("RoomNum");
+                                    type = resultSet.getString("Type");
+                                    checkIn = resultSet.getString("CheckInDate");
+                                    checkOut = resultSet.getString("CheckOutDate");
+                                    customerID = resultSet.getInt("CustomerID");
+                                    System.out.print("\nRoom Number: " + roomNum);
+                                    System.out.print("\nType: " + type);
+                                    System.out.print("\nCheck-in date: " + checkIn);
+                                    System.out.print("\nCheck-out date: " + checkOut);
+                                    System.out.print("\nCustomer ID: " + customerID);
+
+                                }
+                                if (emptySet) {
+                                    System.out.print("\n\nYou have no "
+                                            + "rooms booked!\n");
+                                    break;
+
+                                }
+
+                                System.out.print("\nEnter the room number you want to cancel: ");
+                                int selection = console.nextInt();
+
+                                System.out.print("\nEnter the check-in date: ");
+                                checkIn = console.next();
+
+                                query = "DELETE FROM Records WHERE RoomNum = ?"
+                                        + " AND CustomerID = ? AND CheckInDate = ?";
+                                preparedStmt = connect.prepareStatement(query);
+                                preparedStmt.setInt(1, selection);
+                                preparedStmt.setInt(2, customerID);
+                                preparedStmt.setString(3, checkIn);
+
+                                preparedStmt.execute();
+                                
+                                
+
                                 break;
                             case "5":// pay charge 
-                                String query = "update Charges set Amount = ? "
-                                        + "where CustomerID =" + customerID;
-                                PreparedStatement preparedStmt = connect.prepareStatement(query);
-                                preparedStmt.setInt(1, 0);  
+
+                                query = "SELECT * FROM Charges WHERE CustomerID = ?";
+                                preparedStmt = connect.prepareStatement(query);
+                                preparedStmt.setInt(1, customerID);
+
+                                // execute the preparedstatement
+                                resultSet = preparedStmt.executeQuery();
+
+                                emptySet = true;
+
+                                while (resultSet.next()) {
+
+                                    emptySet = false;
+                                    int creditCard = resultSet.getInt("CreditCard");
+                                    double amount = resultSet.getDouble("Amount");
+                                    roomNum = resultSet.getInt("RoomNum");
+                                    int employeeID = resultSet.getInt("EmployeeID");
+                                    customerID = resultSet.getInt("CustomerID");
+
+                                    if (amount == 0.00) {
+                                        emptySet = true;
+                                    }
+
+                                    System.out.print("\nCard Number: " + creditCard);
+                                    System.out.print("\nRoom Number: " + roomNum);
+                                    System.out.print("\nAmount: " + amount);
+                                    System.out.print("\nEmployee ID: " + employeeID);
+                                    System.out.print("\nCustomer ID: " + customerID);
+
+                                }
+                                if (emptySet) {
+                                    System.out.print("\n\nYou have no "
+                                            + "unpaid charges!\n");
+                                    break;
+                                }
+
+                                System.out.print("\nEnter the room number "
+                                        + "you want to pay for: ");
+                                int numberSelect = console.nextInt();
+
+                                if (roomNum != numberSelect) {
+                                    System.out.print("You did not "
+                                            + "stay in that room!");
+                                    break;
+                                }
+
+                                query = "update Records set Paid = ? "
+                                        + "where CustomerID =" + customerID + ""
+                                        + " AND RoomNum = " + numberSelect;
+                                preparedStmt = connect.prepareStatement(query);
+                                preparedStmt.setString(1, "TRUE");
+                                preparedStmt.executeUpdate();
+
+                                query = "update Charges set Amount = ?  "
+                                        + "where CustomerID = " + customerID + " "
+                                        + "AND RoomNum = " + numberSelect;
+
+                                preparedStmt = connect.prepareStatement(query);
+                                preparedStmt.setDouble(1, 0.00);
                                 preparedStmt.executeUpdate();
 
                                 break;
@@ -261,12 +442,25 @@ public class ProjectClient {
                     }//end while
 
                     break;
+
                 case "2"://employee
-                    employeeLogin();
-                    employeeMenu();
                     break;
                 case "3"://admin
                     
+                   String passWord = PassWordGenerator("Password", "somesalt");
+                   
+                   System.out.print("\nEnter the admin password: ");
+                   String adminPassWd = console.next();
+                   
+                   String adminEncrypt = PassWordGenerator(adminPassWd, "somesalt");
+                   
+                   if(passWord.equals(adminEncrypt)){
+                       System.out.print("Welcome!");
+                       
+                   }else{
+                      System.out.print("Get out of here hacker!");
+                      break;
+                   }
                     break;
                 case "0":
                     flag = false;
@@ -304,371 +498,21 @@ public class ProjectClient {
                 + "Enter a command: ");
 
     }
-    
-    public static void employeeLogin() throws SQLException{
-        
-        if(DEBUG) {
-            System.out.println("Entered employee login function");
-        }
 
-        boolean exit = false;
+    public static String PassWordGenerator(String passwordToHash, String salt) {
+        String generatedPassword = null;
         try {
-            while (!exit) {
-
-                System.out.print("Enter your ID: ");
-                int employeeID = console.nextInt();
-                checkEmployeeLogin.setInt(1, employeeID);
-                //statement = connect.createStatement();
-                //resultSet = statement.executeQuery("SELECT * FROM Employees "
-                        //+ "WHERE EmployeeID = " + employeeID);
-                
-                if (resultSet.next() == false) {
-                    System.out.println("EmployeeID not found!");
-                }
-                else {
-                    exit = true;
-                }
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            md.update(salt.getBytes(StandardCharsets.UTF_8));
+            byte[] bytes = md.digest(passwordToHash.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < bytes.length; i++) {
+                sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
             }
+            generatedPassword = sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
-        catch (InputMismatchException e) {
-            System.out.println(e.getMessage());
-        }
-
-    }
-    
-    public static void employeeMenu() throws SQLException {
-        
-        if (DEBUG) {
-            System.out.println("\nEntered Employee Menu Display");
-        }
-        
-        boolean exit = false;
-        
-        String userCommand;
-        
-        while (!exit) {
-            
-            System.out.print("\n\nWhat would you like to do?\n"
-                + "1 -- Check Booking\n"
-                + "2 -- Book Room\n"
-                + "3 -- Check In Customer\n"
-                + "4 -- Check Out Customer\n"
-                + "5 -- Cancel Booking\n"
-                + "6 -- Pay Charge\n"
-                + "7 -- Add a Charge\n"
-                + "0 -- to stop\n"
-                + "Enter a command: ");
-            
-            userCommand = console.next();
-            
-            switch(userCommand) {
-                
-                case "1"://check customer booking
-                    checkCustomerBookings();
-                    break;
-                case "2"://Book Room
-                    bookRoom();
-                    break;
-                case "3"://Check In Customer
-                    checkIn();
-                    break;
-                case "4"://Check out Customer
-                    checkOut();
-                    break;
-                case "5"://Cancel Booking
-                    cancelBooking();
-                    break;
-                case "6"://Pay Charge
-                    payCharge();
-                    break;
-                case "7"://Add a charge
-                    addCharge();
-                    break;
-                case "0":
-                    break;
-
-            }
-
-        }
-
-    }
-    
-    public static void checkCustomerLogin() throws SQLException {
-        
-    }
-
-    public static void checkCustomerBookings() throws SQLException {
-
-        int customerID = 0;
-
-        boolean exit = false;
-
-        while (!exit) {
-
-            System.out.println("Enter the CustomerID to check bookings: ");
-
-            try {
-
-                customerID = console.nextInt();
-
-            } catch (InputMismatchException e) {
-
-            }
-
-        }
-        if (DEBUG) {
-            System.out.println("\nCalling checkCustomerBookings(" + customerID
-            + ")");
-        }
-        checkCustomerBookings(customerID);
-    }
-
-    public static void checkCustomerBookings(int customerID) throws SQLException {
-        
-        resultSet = statement.executeQuery("SELECT * FROM Records "
-                + "WHERE CustomerID = " + customerID);
-
-        if (resultSet.next() == false) {
-            System.out.print("No Records Found!");
-        }
-
-        while (resultSet.next()) {
-            int roomNum = resultSet.getInt("RoomNum");
-            String type = resultSet.getString("Type");
-            String checkIn = resultSet.getString("CheckInDate");
-            String checkOut = resultSet.getString("CheckOutDate");
-            customerID = resultSet.getInt("CustomerID");
-            double charge = resultSet.getDouble("Charge");
-            System.out.print("\nCustomer ID: " + customerID);
-            System.out.print("\nRoom Number: " + roomNum);
-            System.out.print("\nRoom Type: " + type);
-            System.out.print("\nCheck-in Date: " + checkIn);
-            System.out.print("\nCheck-out Date: " + checkOut);
-            System.out.print("\nCharge: " + charge);
-
-        }
-    }
-
-    public static void bookRoom() throws SQLException {
-
-        int userSelection;
-
-        String type = null;
-
-        boolean exit = false;
-
-        while (!exit) {
-
-            System.out.print("\nWhich type of room"
-                    + " would you like?\n"
-                    + "\nEnter 1 for 1 bed"
-                    + "\nEnter 2 for 2 bed"
-                    + "\nEnter 3 for 3 bed\n"
-                    + "Enter 4 for a suite: ");
-
-            try {
-                userSelection = console.nextInt();
-                
-                switch (userSelection) {
-                    case 1:
-                        type = "\"1Bed\"";
-                        break;
-                    case 2:
-                        type = "\"2Bed\"";
-                        break;
-                    case 3:
-                        type = "\"3Bed\"";
-                        break;
-                    case 4:
-                        type = "\"Suite\"";
-                        break;
-                    default:
-                        throw new InputMismatchException("Please enter a valid"
-                                + "selection");
-                }
-            } catch (InputMismatchException e) {
-                System.out.println(e.getMessage());
-            }
-            
-        }
-
-        statement = connect.createStatement();
-        resultSet = statement.executeQuery("SELECT * FROM Rooms WHERE "
-                + "availability = \"TRUE\" AND type = " + type);
-        while (resultSet.next()) {
-            int roomNum = resultSet.getInt("RoomNum");
-            String roomType = resultSet.getString("Type");
-
-            System.out.println("\nRoom: " + roomNum + " "
-                    + ":Type " + roomType);
-
-        }
-    }
-    
-    public static void payCharge() throws SQLException {
-        int customerID = 0;
-        
-        boolean exit = false;
-        
-        int userSelection = 0;
-        
-        while(!exit) {
-            System.out.println("\nEnter the CustomerID: ");
-            try {
-                customerID = console.nextInt();
-            }
-            catch (InputMismatchException e) {
-                System.out.print(e.getMessage());
-            }
-        }
-        
-        payCharge(customerID);
-    }
-
-    public static void payCharge(int customerID) throws SQLException {
-        String query = "update Charges set Amount = ? "
-                + "where CustomerID =" + customerID;
-        PreparedStatement preparedStmt = connect.prepareStatement(query);
-        preparedStmt.setInt(1, 0);
-        preparedStmt.executeUpdate();
-    }
-    
-    public static void cancelBooking() throws SQLException {
-        int customerID = 0;
-        
-        boolean exit = false;
-        
-        int userSelection = 0;
-        
-        while(!exit) {
-            System.out.println("\nEnter CustomerID: ");
-            try {
-                customerID = console.nextInt();
-            }
-            catch (InputMismatchException e) {
-                System.out.print(e.getMessage());
-            }
-        }
-        
-        cancelBooking(customerID);
-    }
-    
-    public static void cancelBooking(int customerID) {
-        
-        System.out.println("Cancelling bookings is not yet implemented");
-        
-    }
-    
-    public static void checkIn() throws SQLException {
-        int customerID = 0;
-        
-        boolean exit = false;
-        
-        int userSelection = 0;
-        
-        while(!exit) {
-            System.out.println("\nEnter CustomerID: ");
-            try {
-                customerID = console.nextInt();
-                
-            }
-            catch (InputMismatchException e) {
-                System.out.print(e.getMessage());
-            }
-        }
-        
-        checkIn(customerID);
-    }
-    
-    public static void checkIn(int customerID) {
-        System.out.println("Check in is not yet implemented");
-    }
-    
-    public static void checkOut() throws SQLException {
-        int customerID = 0;
-        
-        boolean exit = false;
-        
-        int userSelection = 0;
-        
-        while(!exit) {
-            
-            try {
-                
-            }
-            catch (InputMismatchException e) {
-                System.out.print(e.getMessage());
-            }
-        }
-        
-        payCharge(customerID);
-    }
-
-    public static void checkOut(int customerID) {
-        System.out.println("You can check out anytime you like\nBut you can"
-                + "never leave");
-    }
-
-    private static void addCharge() {
-         int customerID = 0;
-        
-        boolean exit = false;
-        
-        int userSelection = 0;
-        
-        while(!exit) {
-            
-            try {
-                
-            }
-            catch (InputMismatchException e) {
-                System.out.print(e.getMessage());
-            }
-        }
-        
-        addCharge(customerID);
-    }
-    
-    private static void addCharge(int customerID) {
-        System.out.println("We can't add charges yet. Everything is free.");
-    }
-
-    private static void initializePreparedStatements() throws SQLException {
-        
-        //Create the checkCustomerLogin statement
-        String query = "SELECT * from Customers Where CustomerID = "
-                + "(CustomerID) values(?)";
-        checkCustomerLogin = connect.prepareStatement(query);
-        query = "SELECT * from Employees Where EmployeeID = "
-                + "(EmployeeID) values(?)";
-        checkEmployeeLogin = connect.prepareStatement(query);
-        query = "";
-        checkAdminLogin = connect.prepareStatement(query);
-        //Set up the add customer statement
-        query = " insert into Customers (CustomerID, "
-                + "fName, lName, Address, PhoneNum,"
-                + "ZipCode, City, State)"
-                + " values (?, ?, ?, ?, ?, ?, ?, ?)";
-        addCustomer = connect.prepareStatement(query);
-        query = "";
-        addEmployee = connect.prepareStatement(query);
-        query = "";
-        checkBookings = connect.prepareStatement(query);
-        query = "";
-        cancelBooking = connect.prepareStatement(query);
-        query = "";
-        bookRoom = connect.prepareStatement(query);
-        query = "";
-        payCharges = connect.prepareStatement(query);
-        query = "";
-        checkIn = connect.prepareStatement(query);
-        query = "";
-        checkOut = connect.prepareStatement(query);
-        query = "";
-        addCharge = connect.prepareStatement(query);
-        query = "";
-        checkBooking = connect.prepareStatement(query);
-
-    }
-
+        return generatedPassword;
+    }//endPassWordGenerator
 }//end class
